@@ -22,7 +22,7 @@ async def get_all_heroes():
 async def get_all_heroes_by_type(hero_type: str = Query()):
     result = []
     for hero in HEROES:
-        if hero_type.casefold() in hero.get("type").casefold():
+        if hero_type.casefold() in hero.type.casefold():
             result.append(hero)
     return result
 
@@ -31,7 +31,7 @@ async def get_all_heroes_by_type(hero_type: str = Query()):
 async def get_all_heroes_by_rank(hero_rank: int = Query()):
     result = []
     for hero in HEROES:
-        if hero.get("rank") >= hero_rank:
+        if hero.rank >= hero_rank:
             result.append(hero)
     return result
 
@@ -39,7 +39,7 @@ async def get_all_heroes_by_rank(hero_rank: int = Query()):
 @app.get("/hero/id/{hero_id}")
 async def get_one_hero_by_id(hero_id: int = Path()):
     for hero in HEROES:
-        if hero.get("id") == hero_id:
+        if hero.id == hero_id:
             return hero
 
 # @app.get("/heroes/id")
@@ -54,7 +54,7 @@ async def get_one_hero_by_id(hero_id: int = Path()):
 @app.get("/hero/nick/{nick}")
 async def get_one_hero_by_nick(nick: str = Path()):
      for hero in HEROES:
-         if nick.casefold() in hero.get("nick_name").casefold():
+         if nick.casefold() in hero.nick_name.casefold():
              return hero
 
 # POST/CREATE (BY BODY)
@@ -73,6 +73,6 @@ async def update_hero(hero_body = Body()):
 @app.delete("/hero/delete/{hero_id}")
 async def delete_hero(hero_id: int = Path()):
     for i in range(len(HEROES)):
-        if HEROES[i].get("id") == hero_id:
+        if HEROES[i].id == hero_id:
             HEROES.pop(i)
             break
