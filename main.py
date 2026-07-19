@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Query, Path, Body
-
 from heroes import HEROES
+from classes import Hero, HeroValidation
 
 from utils import find_proper_hero_id
 
@@ -57,17 +57,31 @@ async def get_one_hero_by_nick(nick: str = Path()):
          if nick.casefold() in hero.nick_name.casefold():
              return hero
 
+# # POST/CREATE (BY BODY)
+# @app.post("/hero/create")
+# async def create_hero(hero_body = Body()):
+#     HEROES.append(find_proper_hero_id(hero_body))
+
+# # POST/CREATE (BY BODY)
+# @app.post("/hero/create")
+# async def create_hero(hero_body: HeroValidation = Body()):
+#     print(type(hero_body))
+#     pass
+
 # POST/CREATE (BY BODY)
 @app.post("/hero/create")
-async def create_hero(hero_body = Body()):
-    HEROES.append(find_proper_hero_id(hero_body))
+async def create_hero(hero_body: HeroValidation = Body()):
+    new_hero = Hero(**hero_body.model_dump())
+    print(type(new_hero))
+    HEROES.append(find_proper_hero_id(new_hero))
+    #pass
 
 # UPDATE WITH PUT (BY BODY)
 @app.put("/hero/update")
-async def update_hero(hero_body = Body()):
+async def update_hero(hero_body: HeroValidation = Body()): #utilisation de HeroValidation -> même description swagger
     for i in range(len(HEROES)):
-        if HEROES[i].get("id") == hero_body.get("id"):
-            HEROES[i] = hero_body
+        if HEROES[i].id == hero_body.id:
+            HEROES[i] = Hero(**hero_body.model_dump())
 
 #Delete by id (as PATH PARAM, not query)
 @app.delete("/hero/delete/{hero_id}")
