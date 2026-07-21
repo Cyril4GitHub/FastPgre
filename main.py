@@ -4,10 +4,16 @@ from classes import Hero, HeroValidation
 from starlette import status
 from utils import find_proper_hero_id
 
-from database import db_dependency
+from database import db_dependency, engine
 from sqlalchemy import text
 
+import models
+from models import Heroes
+
 app = FastAPI()
+
+
+models.Base.metadata.create_all(bind=engine)  # Create tables in the database
 
 # Get server status
 # @app.get("/")
@@ -24,9 +30,14 @@ async def heartbeat(db : db_dependency):
         return { "error":str(e) }
     
 # Get All heroes
+#@app.get("/heroes", status_code=status.HTTP_200_OK)
+# async def get_all_heroes():
+#     return HEROES
 @app.get("/heroes", status_code=status.HTTP_200_OK)
-async def get_all_heroes():
-    return HEROES
+async def get_all_heroes(db: db_dependency):
+    return db.query(Heroes).order_by(Heroes.id.asc()).all()
+
+
 
 #Get by type (as QUERY PARAM)
 @app.get("/heroes/type", status_code=status.HTTP_200_OK)
