@@ -1,5 +1,6 @@
-from typing import List, Optional
-from pydantic import BaseModel, Field, constr
+from dataclasses import field
+from typing import List, Literal, Optional
+from pydantic import BaseModel, Field, constr, field_validator
 
 
 class Hero:
@@ -40,6 +41,40 @@ class HeroValidation(BaseModel):
                 "hobby": ["Reading", "Photography"],
                 "type": ["Alien", "Hero"],
                 "rank": 95
+            }
+        }
+    }
+
+
+AllowedRoles = Literal[ "admin", "moderator", "player"]
+
+class PlayerValidation(BaseModel):
+    email: str = Field(min_length=5)
+    username: str = Field(min_length=3)
+    first_name: str = Field(min_length=3)
+    last_name: str = Field(min_length=3)
+    password: str = Field(min_length=8)
+    role: AllowedRoles = Field(description="The role of the player")
+    # PRE VALIDATOR
+    @field_validator("role", mode="before")
+    @classmethod
+    def lower_case_role(cls, val: str) -> str:
+        return val.lower()
+    
+    # def validate_role(cls, v):
+    #     if v not in AllowedRoles.__args__:
+    #         raise ValueError(f"Invalid role. Must be one of {AllowedRoles.__args__}")
+    #     return v
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "player1@example.com",
+                "username": "player1",
+                "first_name": "John",
+                "last_name": "Doe",
+                "password": "securepassword",
+                "role": "player"
             }
         }
     }
