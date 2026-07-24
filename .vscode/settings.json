@@ -1,4 +1,6 @@
 {
     "python.analysis.autoImportCompletions": true,
-    "python.analysis.indexing": true
+    "python.analysis.indexing": true,
+    "python.analysis.typeCheckingMode": "standard",
+    "python.analysis.diagnosticMode": "workspace"
 }
