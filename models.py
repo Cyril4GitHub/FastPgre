@@ -1,6 +1,6 @@
 from database import Base
 
-from sqlalchemy import String, Integer
+from sqlalchemy import String, Integer, ForeignKey
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -16,6 +16,7 @@ class Heroes(Base):
     hobby: Mapped[list[str]] = mapped_column(ARRAY(String(50)))
     type: Mapped[str] = mapped_column(String(50))
     rank: Mapped[int] = mapped_column(Integer)
+    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("players.id"))  # Foreign key to Players.id
 
 class Players(Base):
     __tablename__ = "players"

@@ -1,15 +1,23 @@
 from typing import Annotated
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException
 from starlette import status
 from classes import PlayerValidation
 from models import Players
 from database import db_dependency
 from passlib.context import CryptContext
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import jwt
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer 
+from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
 
-router = APIRouter()
+router = APIRouter(
+    tags=["Auth"],
+    prefix="/auth"
+)
+
+
+# BEARER TOKEN DEPENDENCY FOR THE ENDPOINTS THAT REQUIRE AUTHENTICATION
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/auth/login")    
+
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -40,8 +48,27 @@ def create_token(username: str, user_id: int, expires_delta: timedelta = None):
     encoded_data.update({"exp": expiration.timestamp()})
     return jwt.encode(encoded_data, JWT_SECRET_KEY, algorithm=JWT_ALGO)
 
+#FOR AUTH MIDDLEWARE
+async def get_current_player(token: Annotated[str, Depends(oauth2_bearer)], db: db_dependency):
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGO])
+        username: str | None = payload.get("sub")
+        user_id: int | None = payload.get("id")
+        if username is None or user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token - Wrong Credentials") 
+        else:
+            print(f"Token decoded successfully: username={username}, user_id={user_id}")
+            
+            return { "username": username, "id": user_id }
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token - Wrong Credentials")
 
-@router.post("/auth/register", status_code=status.HTTP_201_CREATED)
+    player = db.query(Players).filter(Players.username == username, Players.id == user_id).first()
+    return player
+
+
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_player(db: db_dependency, player_body: PlayerValidation = Body()):
     #return {"message": "Player registered successfully", "player": player_body}
     new_player = Players(
@@ -58,14 +85,18 @@ async def register_player(db: db_dependency, player_body: PlayerValidation = Bod
    #return new_player
 
 
-@router.post("/auth/login")
+@router.post("/login")
 async def login_player(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency,):
     player_authenticated = authenticate_player(db, form_data.username, form_data.password)
     #player = authenticate_player(db, form_data.username, form_data.password)
     if player_authenticated is None:
-        return {"error": "Invalid username or password"}
+        #return {"error": "Invalid username or password"}
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")
     else:
         token = create_token(player_authenticated.username, player_authenticated.id, timedelta(minutes=30))
-        return token 
+        return {
+        "access_token": token,
+        "token_type": "bearer"
+        }
         #{"message": "Login successful", "player": player_authenticated, "token": token}
 
